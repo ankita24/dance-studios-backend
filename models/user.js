@@ -4,7 +4,7 @@ const options = { discriminatorKey: 'userType' }
 
 const userSchema = mongoose.Schema(
   {
-    name: { type: 'string', require: true, },
+    name: { type: 'string', require: true },
     email: { type: 'string', require: true, unique: true },
     password: { type: 'string', require: true },
     image: { type: 'string' },
@@ -18,11 +18,15 @@ const userSchema = mongoose.Schema(
 const ownerSchema = mongoose.Schema(
   {
     location: { type: 'string' },
-    photos: { type: 'string' },
+    images: { type: ['string'] },
     cost: { type: 'number' },
     duration: { type: 'number' },
     sqFeet: { type: 'number' },
     soundProof: { type: 'boolean' },
+    lat: { type: 'number' },
+    long: { type: 'number' },
+    area: { type: 'number' },
+    rooms: { type: 'number' },
   },
   options
 )

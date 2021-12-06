@@ -6,9 +6,6 @@ const User = require('./models/user').User
 const Owner = require('./models/user').Owner
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-var multer = require('multer')
-var imgModel = require('./models/image')
-var fs = require('fs')
 
 const app = express()
 
@@ -26,17 +23,6 @@ mongoose.connect(
     useCreateIndex: true,
   }
 )
-
-var storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, '/Users/ankitapanigrahi/Documents/uploads')
-  },
-  filename: (req, file, cb) => {
-    cb(null, file.fieldname + '-' + Date.now())
-  },
-})
-
-var upload = multer({ storage: storage })
 
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body
@@ -75,13 +61,15 @@ app.post('/api/register', async (req, res) => {
     })
   }
   try {
+    let response
     if (type === 'user') {
-      const response = await User.create({ email, name, password, image })
+      response = await User.create({ email, name, password, image })
       console.log('User created successfully', response)
     } else {
-      const response = await Owner.create({ email, name, password, image })
+      response = await Owner.create({ email, name, password, image })
       console.log('Owner created successfully', response)
     }
+    res.json({ status: 'ok', response })
   } catch (error) {
     console.error(error)
     // if (error.code === 11000) {
@@ -89,27 +77,19 @@ app.post('/api/register', async (req, res) => {
     // }
     throw error
   }
-  res.json({ status: 'ok' })
+  //res.json({ status: 'ok' })
 })
 
-app.post('/api/imageUpload', upload.single('photo'), (req, res, next) => {
-  var obj = {
-    name: req.file.filename,
-    originalName: req.file.originalname,
-    data: fs.readFileSync(
-      path.join('/Users/ankitapanigrahi/Documents/uploads/' + req.file.filename)
-    ),
-    contentType: 'image/png',
-  }
-
-  imgModel.create(obj, (err, item) => {
-    if (err) {
-      return res.json({ status: 'error', error: 'Error Uploading image' })
-    } else {
-      // item.save();
-      return res.json({ data: item.originalName })
-    }
-  })
+app.put('/api/owner/:id', (req, res, next) => {
+  Owner.updateOne({ _id: req.params.id }, req.body)
+    .then(() => {
+      console.log('Owner details updated')
+    })
+    .catch(error => {
+      console.error(error)
+      throw error
+    })
+  res.send({ status: 'ok' })
 })
 
 app.listen(9999, () => {
