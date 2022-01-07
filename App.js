@@ -6,6 +6,7 @@ const User = require('./models/user').User
 const Owner = require('./models/user').Owner
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
+const user = require('./models/user')
 
 const app = express()
 
@@ -26,23 +27,22 @@ mongoose.connect(
 
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body
-  const user = await User.findOne({ username }).lean()
-  if (!user)
+  const user = await User.findOne({ name: username }).lean()
+  if (!user) {
     return res.json({ status: 'error', error: 'Invalid username/password' })
+  }
   if (await bcrypt.compare(password, user.password)) {
-    console.log('aya')
-    const token = jwt.sign(
-      { id: user._id, username: user.username },
-      JWT_SECRET
-    )
-    return res.json({ status: 'ok', data: token })
+    // const token = jwt.sign(
+    //   { id: user._id, username: user.username },
+    //   JWT_SECRET
+    // )
+    return res.json({ status: 'ok', id: user._id })
   }
   res.json({ status: 'error', error: 'Invalid username/password' })
 })
 
 app.post('/api/register', async (req, res) => {
   const { email, name, image, type, password: plainTextPassword } = req.body
-  console.log(req.body)
   const password = await bcrypt.hash(plainTextPassword, 10)
   if (!email || typeof email !== 'string') {
     return res.json({ status: 'error', error: 'Invalid email' })
@@ -80,16 +80,38 @@ app.post('/api/register', async (req, res) => {
   //res.json({ status: 'ok' })
 })
 
-app.put('/api/owner/:id', (req, res, next) => {
-  Owner.updateOne({ _id: req.params.id }, req.body)
-    .then(() => {
-      console.log('Owner details updated')
-    })
-    .catch(error => {
-      console.error(error)
-      throw error
-    })
+app.put('/api/owner/:id', (req, res) => {
+  try {
+    Owner.updateOne({ _id: req.params.id }, req.body)
+      .then(() => {
+        console.log('Owner details updated')
+      })
+      .catch(error => {
+        console.error(error)
+        throw error
+      })
+  } catch (error) {
+    console.error(error)
+    // if (error.code === 11000) {
+    //   return res.json({ status: 'error', error: 'Username already in use!' })
+    // }
+    throw error
+  }
   res.send({ status: 'ok' })
+})
+
+app.get('/api/profile/:id', async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.params.id }).select('-password')
+    console.log(user)
+    return res.send({ status: 'ok', user })
+  } catch (error) {
+    console.error(error)
+    // if (error.code === 11000) {
+    //   return res.json({ status: 'error', error: 'Username already in use!' })
+    // }
+    throw error
+  }
 })
 
 app.listen(9999, () => {
