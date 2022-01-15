@@ -7,6 +7,9 @@ const Owner = require('./models/user').Owner
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const user = require('./models/user')
+var distance = require('distance-matrix-api')
+const dotenv = require('dotenv')
+dotenv.config()
 
 const app = express()
 
@@ -14,7 +17,7 @@ app.use(bodyParser.json())
 
 const password = 'IxoxASPCVY5KKLVz'
 
-const JWT_SECRET = 'dsfjvdfhgsjhfbsdjhfb$^%%&jhbdfhjbdfbfgdhvdjbkjdsbf'
+const JWT_SECRET = process.env.JWT_SECRET
 
 mongoose.connect(
   `mongodb+srv://ankita:${password}@studio.ituqd.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`,
@@ -36,7 +39,11 @@ app.post('/api/login', async (req, res) => {
     //   { id: user._id, username: user.username },
     //   JWT_SECRET
     // )
-    return res.json({ status: 'ok', id: user._id })
+    return res.json({
+      status: 'ok',
+      id: user._id,
+      type: user.__t === 'OwnerSchema' ? 'owner' : 'user',
+    })
   }
   res.json({ status: 'error', error: 'Invalid username/password' })
 })
@@ -101,6 +108,7 @@ app.put('/api/owner/:id', (req, res) => {
 })
 
 app.get('/api/profile/:id', async (req, res) => {
+  console.log(req.params.id)
   try {
     const user = await User.findOne({ _id: req.params.id }).select('-password')
     console.log(user)
@@ -111,6 +119,57 @@ app.get('/api/profile/:id', async (req, res) => {
     //   return res.json({ status: 'error', error: 'Username already in use!' })
     // }
     throw error
+  }
+})
+
+app.get('/api/studios', async (req, res) => {
+  const { lat, long } = req.query
+  try {
+    let data = []
+    const studios = await User.find({ __t: 'OwnerSchema' }).select('-password')
+    /**
+     * TODO: Keep the API key environment variable
+     */
+
+    distance.key(process.env.DISTANCE_MATRIX_KEY)
+    distance.units('imperial')
+    studios.forEach(item => {
+      if ((lat && long && item.lat && item, long)) {
+        let path = 0
+        const origins = [`${lat},${long}`]
+        const destinations = [`${item.lat},${item.long}`]
+        distance.matrix(origins, destinations, function (err, distances) {
+          if (err) {
+            return console.log(err)
+          }
+          if (!distances) {
+            return console.log('no distances')
+          }
+          if (distances.status == 'OK') {
+            for (var i = 0; i < origins.length; i++) {
+              for (var j = 0; j < destinations.length; j++) {
+                if (distances.rows[0].elements[j].status == 'OK') {
+                  path = distances.rows[i].elements[j].distance.text
+                }
+              }
+            }
+          }
+        })
+        data.push({
+          ...item._doc,
+          distance: path,
+        })
+      }
+    })
+    console.log(data)
+    res.send({
+      status: 'ok',
+      data: data.sort((a, b) => a.distance - b.distance),
+    })
+  } catch (err) {
+    console.error(err)
+
+    throw err
   }
 })
 
