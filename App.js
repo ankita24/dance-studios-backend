@@ -7,8 +7,8 @@ const Owner = require('./models/user').Owner
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const user = require('./models/user')
-var distance = require('distance-matrix-api')
 const dotenv = require('dotenv')
+var axios = require('axios')
 dotenv.config()
 
 const app = express()
@@ -130,41 +130,37 @@ app.get('/api/studios', async (req, res) => {
     /**
      * TODO: Keep the API key environment variable
      */
-
-    distance.key(process.env.DISTANCE_MATRIX_KEY)
-    distance.units('imperial')
+    let promise = []
     studios.forEach(item => {
-      if ((lat && long && item.lat && item, long)) {
-        let path = 0
-        const origins = [`${lat},${long}`]
-        const destinations = [`${item.lat},${item.long}`]
-        distance.matrix(origins, destinations, function (err, distances) {
-          if (err) {
-            return console.log(err)
-          }
-          if (!distances) {
-            return console.log('no distances')
-          }
-          if (distances.status == 'OK') {
-            for (var i = 0; i < origins.length; i++) {
-              for (var j = 0; j < destinations.length; j++) {
-                if (distances.rows[0].elements[j].status == 'OK') {
-                  path = distances.rows[i].elements[j].distance.text
-                }
-              }
-            }
-          }
-        })
-        data.push({
-          ...item._doc,
-          distance: path,
-        })
+      if (!!lat && !!long && !!item.lat && !!item.long) {
+        var config = {
+          method: 'get',
+          url: `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${lat},${long}&destinations=${item.lat},${item.long}&units=imperial&key=${process.env.DISTANCE_MATRIX_KEY}`,
+          headers: {},
+        }
+        promise.push(
+          axios(config)
+            .then(function (response) {
+              let distance = response.data.rows[0].elements[0].distance?.value
+              let duration = response.data.rows[0].elements[0].duration?.value
+              if (!!distance && !!duration)
+                data.push({
+                  ...item._doc,
+                  distance: distance / 1000,
+                  duration: duration,
+                })
+            })
+            .catch(function (error) {
+              console.error(error)
+            })
+        )
       }
     })
-    console.log(data)
-    res.send({
-      status: 'ok',
-      data: data.sort((a, b) => a.distance - b.distance),
+    Promise.all(promise).then(() => {
+      res.send({
+        status: 'ok',
+        data: data.sort((a, b) => a.distance - b.distance),
+      })
     })
   } catch (err) {
     console.error(err)
