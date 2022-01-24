@@ -142,12 +142,12 @@ app.get('/api/studios', async (req, res) => {
           axios(config)
             .then(function (response) {
               let distance = response.data.rows[0].elements[0].distance?.value
-              let duration = response.data.rows[0].elements[0].duration?.value
+              let timeToReach = response.data.rows[0].elements[0].duration?.value
               if (!!distance && !!duration)
                 data.push({
                   ...item._doc,
                   distance: distance / 1000,
-                  duration: duration,
+                  timeToReach: timeToReach,
                 })
             })
             .catch(function (error) {
