@@ -27,6 +27,9 @@ const ownerSchema = mongoose.Schema(
     long: { type: 'number' },
     area: { type: 'number' },
     rooms: { type: 'number' },
+    availabilty: {
+      type: [{ day: 'string', timings: [{ start: Date, end: Date }] }],
+    },
   },
   options
 )

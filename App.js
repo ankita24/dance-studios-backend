@@ -43,6 +43,7 @@ app.post('/api/login', async (req, res) => {
       status: 'ok',
       id: user._id,
       type: user.__t === 'OwnerSchema' ? 'owner' : 'user',
+      user,
     })
   }
   res.json({ status: 'error', error: 'Invalid username/password' })
@@ -108,10 +109,8 @@ app.put('/api/owner/:id', (req, res) => {
 })
 
 app.get('/api/profile/:id', async (req, res) => {
-  console.log(req.params.id)
   try {
     const user = await User.findOne({ _id: req.params.id }).select('-password')
-    console.log(user)
     return res.send({ status: 'ok', user })
   } catch (error) {
     console.error(error)
@@ -142,7 +141,8 @@ app.get('/api/studios', async (req, res) => {
           axios(config)
             .then(function (response) {
               let distance = response.data.rows[0].elements[0].distance?.value
-              let timeToReach = response.data.rows[0].elements[0].duration?.value
+              let timeToReach =
+                response.data.rows[0].elements[0].duration?.value
               if (!!distance && !!duration)
                 data.push({
                   ...item._doc,
