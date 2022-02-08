@@ -72,10 +72,10 @@ app.post('/api/register', async (req, res) => {
     let response
     if (type === 'user') {
       response = await User.create({ email, name, password, image })
-      console.log('User created successfully', response)
+      console.log('User created successfully!', response)
     } else {
       response = await Owner.create({ email, name, password, image })
-      console.log('Owner created successfully', response)
+      console.log('Owner created successfully!', response)
     }
     res.json({ status: 'ok', response })
   } catch (error) {
