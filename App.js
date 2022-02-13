@@ -189,7 +189,9 @@ app.get('/api/studio/:id', async (req, res) => {
     const studioDetails = await Owner.find({ _id: id }).select('-password')
     const today = new Date()
 
-    const todaySlots = studioDetails[0].availabilty.find(
+    const { availabilty, ...data } = studioDetails[0]._doc
+
+    const todaySlots = availabilty.find(
       item => item.day === weekdays[today.getDay()]
     ).timings
     const slots = []
@@ -199,14 +201,12 @@ app.get('/api/studio/:id', async (req, res) => {
       let slot1 = start
       let slot2 = start.add(1, 'h')
       while (slot2 <= end) {
-        slots.push(`${slot1.format('hh:mm')}-${slot2.format('hh:mm')}`)
+        slots.push(`${slot1.format('hh:mm A')}-${slot2.format('hh:mm A')}`)
         slot1 = slot2
         slot2 = slot2.add(1, 'h')
       }
     })
-    console.log(slots)
-
-    res.send({ status: 'ok' })
+    res.send({ status: 'ok', studioDetails: { ...data, slots } })
   } catch (e) {
     console.error(e)
   }
