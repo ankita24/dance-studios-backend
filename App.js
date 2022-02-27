@@ -4,6 +4,7 @@ const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 const User = require('./models/user').User
 const Owner = require('./models/user').Owner
+const Booking = require('./models/booking').Booking
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const user = require('./models/user')
@@ -209,6 +210,19 @@ app.get('/api/studio/:id', async (req, res) => {
     res.send({ status: 'ok', studioDetails: { ...data, slots } })
   } catch (e) {
     console.error(e)
+  }
+})
+
+app.post(`/api/booking/:studioId`, async (req, res) => {
+  const { studioId } = req.params
+  const { userId, slot, price } = req.body
+  try {
+    const response = await Booking.create({ studioId, userId, slot, price })
+    console.log(response)
+    if (!!response) res.send({ status: 'ok' })
+  } catch (e) {
+    console.error(e.error)
+    throw e
   }
 })
 
