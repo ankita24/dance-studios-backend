@@ -217,12 +217,38 @@ app.post(`/api/booking/:studioId`, async (req, res) => {
   const { studioId } = req.params
   const { userId, slot, price } = req.body
   try {
-    const response = await Booking.create({ studioId, userId, slot, price })
-    console.log(response)
+    const {
+      name: studioName,
+      email: studioEmail,
+      location,
+    } = await User.findById(studioId)
+    const { name: userName, email: userEmail } = await User.findById(userId)
+    const studioDetails = { name: studioName, email: studioEmail, location }
+    const userDetails = { name: userName, email: userEmail }
+    const response = await Booking.create({
+      studioId,
+      userId,
+      slot,
+      price,
+      studioDetails,
+      userDetails,
+    })
     if (!!response) res.send({ status: 'ok' })
   } catch (e) {
     console.error(e.error)
     throw e
+  }
+})
+
+app.get(`/api/bookings/:userId`, async (req, res) => {
+  const { userId } = req.params
+  try {
+    const response = await Booking.find({ userId }).select(
+      '-userDetails -userId'
+    )
+    res.send({ status: 'ok', data: response })
+  } catch (e) {
+    console.error(e)
   }
 })
 
