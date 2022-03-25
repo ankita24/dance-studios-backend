@@ -11,6 +11,7 @@ const user = require('./models/user')
 const dotenv = require('dotenv')
 var axios = require('axios')
 const dayjs = require('dayjs')
+const Razorpay = require('razorpay')
 
 dotenv.config()
 
@@ -21,6 +22,11 @@ app.use(bodyParser.json())
 const password = 'IxoxASPCVY5KKLVz'
 
 const JWT_SECRET = process.env.JWT_SECRET
+
+const instance = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY,
+  key_secret: process.env.RAZORPAY_SECRET,
+})
 
 mongoose.connect(
   `mongodb+srv://ankita:${password}@studio.ituqd.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`,
@@ -225,15 +231,29 @@ app.post(`/api/booking/:studioId`, async (req, res) => {
     const { name: userName, email: userEmail } = await User.findById(userId)
     const studioDetails = { name: studioName, email: studioEmail, location }
     const userDetails = { name: userName, email: userEmail }
-    const response = await Booking.create({
-      studioId,
-      userId,
-      slot,
-      price,
-      studioDetails,
-      userDetails,
-    })
-    if (!!response) res.send({ status: 'ok' })
+    instance.orders
+      .create({
+        amount: price,
+        currency: 'INR',
+        receipt: 'receipt#1',
+        notes: {
+          key1: 'value3',
+          key2: 'value2',
+        },
+      })
+      .then(response => {
+        res.send({ status: 'ok', data: response.id })
+      })
+      .catch(err => console.error(err))
+    // const response = await Booking.create({
+    //   studioId,
+    //   userId,
+    //   slot,
+    //   price,
+    //   studioDetails,
+    //   userDetails,
+    // })
+    // if (!!response)
   } catch (e) {
     console.error(e.error)
     throw e
