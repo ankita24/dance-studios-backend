@@ -38,8 +38,8 @@ mongoose.connect(
 )
 
 app.post('/api/login', async (req, res) => {
-  const { username, password } = req.body
-  const user = await User.findOne({ name: username }).lean()
+  const { email, password } = req.body
+  const user = await User.findOne({ email }).lean()
   if (!user) {
     return res.json({ status: 'error', error: 'Invalid username/password' })
   }
