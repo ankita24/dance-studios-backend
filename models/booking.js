@@ -5,6 +5,7 @@ const bookingSchema = mongoose.Schema({
   userId: { type: 'string', require: true },
   slot: { type: 'string', require: true },
   price: { type: 'number', require: true },
+  date: { type: 'date', require: true },
   studioDetails: {
     name: { type: 'string', require: true },
     email: { type: 'string', require: true },

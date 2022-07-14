@@ -184,23 +184,28 @@ app.get('/api/studio/:id', async (req, res) => {
      * TODO: Change the order of days monday and sunday
      */
     const weekdays = [
-      'Monday',
       'Sunday',
-      'Tuesday',
+      'Monday',
       'Wednesday',
+      'Tuesday',
+
       'Thursday',
       'Friday',
       'Saturday',
     ]
     const { id } = req.params
     const studioDetails = await Owner.find({ _id: id }).select('-password')
+    const response = await Booking.find({ studioId: id }).sort('date')
+    const bookedRooms = response.filter(
+      item => item.date.toLocaleDateString() === new Date().toLocaleDateString()
+    )
     const today = new Date()
 
     const { availabilty, ...data } = studioDetails[0]._doc
 
-    const todaySlots = availabilty.find(
-      item => item.day === weekdays[today.getDay()]
-    ).timings
+    const todaySlots =
+      availabilty.find(item => item.day === weekdays[today.getDay()])
+        ?.timings ?? []
     const slots = []
     todaySlots.forEach(item => {
       const start = dayjs(new Date(item.start))
@@ -208,7 +213,11 @@ app.get('/api/studio/:id', async (req, res) => {
       let slot1 = start
       let slot2 = start.add(1, 'h')
       while (slot2 <= end) {
-        slots.push(`${slot1.format('hh:mm A')}-${slot2.format('hh:mm A')}`)
+        const slotName = `${slot1.format('hh:mm A')}-${slot2.format('hh:mm A')}`
+        const isAlreadyBooked = bookedRooms.filter(
+          item => item.slot === slotName
+        ).length
+        if (isAlreadyBooked < studioDetails[0].rooms) slots.push(slotName)
         slot1 = slot2
         slot2 = slot2.add(1, 'h')
       }
@@ -221,7 +230,7 @@ app.get('/api/studio/:id', async (req, res) => {
 
 app.post(`/api/booking/:studioId`, async (req, res) => {
   const { studioId } = req.params
-  const { userId, slot, price } = req.body
+  const { userId, slot, price, date } = req.body
   try {
     const {
       name: studioName,
@@ -241,32 +250,42 @@ app.post(`/api/booking/:studioId`, async (req, res) => {
           key2: 'value2',
         },
       })
-      .then(response => {
-        res.send({ status: 'ok', data: response.id })
+      .then(async response => {
+        const bookingResponse = await Booking.create({
+          studioId,
+          userId,
+          slot,
+          date,
+          price,
+          studioDetails,
+          userDetails,
+        })
+        if (!!bookingResponse) res.send({ status: 'ok', data: response.id })
       })
       .catch(err => console.error(err))
-    // const response = await Booking.create({
-    //   studioId,
-    //   userId,
-    //   slot,
-    //   price,
-    //   studioDetails,
-    //   userDetails,
-    // })
-    // if (!!response)
   } catch (e) {
     console.error(e.error)
     throw e
   }
 })
 
-app.get(`/api/bookings/:userId`, async (req, res) => {
+app.get(`/api/user-bookings/:userId`, async (req, res) => {
   const { userId } = req.params
   try {
-    const response = await Booking.find({ userId }).select(
-      '-userDetails -userId'
-    )
-    res.send({ status: 'ok', data: response })
+    const response = await Booking.find({ userId })
+      .select('-userDetails -userId')
+      .sort('data')
+    res.send({ status: 'ok', data: response.reverse() })
+  } catch (e) {
+    console.error(e)
+  }
+})
+
+app.get(`/api/studio-bookings/:studioId`, async (req, res) => {
+  const { studioId } = req.params
+  try {
+    const response = await Booking.find({ studioId }).sort('date')
+    res.send({ status: 'ok', data: response.reverse() })
   } catch (e) {
     console.error(e)
   }
