@@ -59,7 +59,15 @@ app.post('/api/login', async (req, res) => {
 })
 
 app.post('/api/register', async (req, res) => {
-  const { email, name, image, type, password: plainTextPassword } = req.body
+  const {
+    email,
+    name,
+    image,
+    type,
+    password: plainTextPassword,
+    phone,
+  } = req.body
+  console.log(phone)
   const password = await bcrypt.hash(plainTextPassword, 10)
   if (!email || typeof email !== 'string') {
     return res.json({ status: 'error', error: 'Invalid email' })
@@ -80,14 +88,15 @@ app.post('/api/register', async (req, res) => {
   try {
     let response
     if (type === 'user') {
-      response = await User.create({ email, name, password, image })
+      response = await User.create({ email, name, password, image, phone })
       console.log('User created successfully!', response)
     } else {
-      response = await Owner.create({ email, name, password, image })
+      response = await Owner.create({ email, name, password, image, phone })
       console.log('Owner created successfully!', response)
     }
     res.json({ status: 'ok', response })
   } catch (error) {
+    console.log(error)
     if (error.code === 11000) {
       return res.json({ status: 'error', error: 'Email already in use!' })
     }

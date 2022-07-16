@@ -8,6 +8,7 @@ const userSchema = mongoose.Schema(
     email: { type: 'string', require: true, unique: true },
     password: { type: 'string', require: true },
     image: { type: 'string' },
+    phone: { type: 'number', require: true, unique: true },
   },
   {
     collections: 'users',
