@@ -11,7 +11,6 @@ const user = require('./models/user')
 const dotenv = require('dotenv')
 var axios = require('axios')
 const dayjs = require('dayjs')
-const Razorpay = require('razorpay')
 
 dotenv.config()
 
@@ -19,14 +18,9 @@ const app = express()
 
 app.use(bodyParser.json())
 
-const password = 'IxoxASPCVY5KKLVz'
+const password = process.env.MONGO_PASSWORD
 
 const JWT_SECRET = process.env.JWT_SECRET
-
-const instance = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY,
-  key_secret: process.env.RAZORPAY_SECRET,
-})
 
 mongoose.connect(
   `mongodb+srv://ankita:${password}@studio.ituqd.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`,
@@ -209,7 +203,7 @@ app.get('/api/studio/:id', async (req, res) => {
     )
     const today = new Date()
 
-    const { availabilty, ...data } = studioDetails[0]._doc
+    const { availabilty, ...data } = studioDetails[0]?._doc ?? {}
 
     const todaySlots =
       availabilty.find(item => item.day === weekdays[today.getDay()])
@@ -248,29 +242,16 @@ app.post(`/api/booking/:studioId`, async (req, res) => {
     const { name: userName, email: userEmail } = await User.findById(userId)
     const studioDetails = { name: studioName, email: studioEmail, location }
     const userDetails = { name: userName, email: userEmail }
-    instance.orders
-      .create({
-        amount: price,
-        currency: 'INR',
-        receipt: 'receipt#1',
-        notes: {
-          key1: 'value3',
-          key2: 'value2',
-        },
-      })
-      .then(async response => {
-        const bookingResponse = await Booking.create({
-          studioId,
-          userId,
-          slot,
-          date,
-          price,
-          studioDetails,
-          userDetails,
-        })
-        if (!!bookingResponse) res.send({ status: 'ok', data: response.id })
-      })
-      .catch(err => console.error(err))
+    const bookingResponse = await Booking.create({
+      studioId,
+      userId,
+      slot,
+      date,
+      price,
+      studioDetails,
+      userDetails,
+    })
+    if (!!bookingResponse) res.send({ status: 'ok', data: response.id })
   } catch (e) {
     console.error(e.error)
     throw e
