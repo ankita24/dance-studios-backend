@@ -60,8 +60,9 @@ app.post('/api/register', async (req, res) => {
     type,
     password: plainTextPassword,
     phone,
+    deviceToken,
+    availabilty,
   } = req.body
-  console.log(phone)
   const password = await bcrypt.hash(plainTextPassword, 10)
   if (!email || typeof email !== 'string') {
     return res.json({ status: 'error', error: 'Invalid email' })
@@ -85,7 +86,15 @@ app.post('/api/register', async (req, res) => {
       response = await User.create({ email, name, password, image, phone })
       console.log('User created successfully!', response)
     } else {
-      response = await Owner.create({ email, name, password, image, phone })
+      response = await Owner.create({
+        email,
+        name,
+        password,
+        image,
+        phone,
+        deviceToken,
+        availabilty,
+      })
       console.log('Owner created successfully!', response)
     }
     res.json({ status: 'ok', response })
@@ -188,9 +197,8 @@ app.get('/api/studio/:id', async (req, res) => {
     const weekdays = [
       'Sunday',
       'Monday',
-      'Wednesday',
       'Tuesday',
-
+      'Wednesday',
       'Thursday',
       'Friday',
       'Saturday',

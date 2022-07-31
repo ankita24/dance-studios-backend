@@ -31,6 +31,7 @@ const ownerSchema = mongoose.Schema(
     availabilty: {
       type: [{ day: 'string', timings: [{ start: Date, end: Date }] }],
     },
+    deviceToken: { type: 'string', require: true, unique: true },
   },
   options
 )
