@@ -18,12 +18,10 @@ const app = express()
 
 app.use(bodyParser.json())
 
-const password = process.env.MONGO_PASSWORD
-
-const JWT_SECRET = process.env.JWT_SECRET
+const password = 'sHoWZANJwIMcGyuZ'//process.env.MONGO_PASSWORD
 
 mongoose.connect(
-  `mongodb+srv://ankita:${password}@studio.ituqd.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`,
+  `mongodb+srv://ankita:${password}@studio.ituqd.mongodb.net/?retryWrites=true&w=majority`,
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -101,7 +99,7 @@ app.post('/api/register', async (req, res) => {
   } catch (error) {
     console.log(error)
     if (error.code === 11000) {
-      return res.json({ status: 'error', error: 'Email already in use!' })
+      return res.json({ status: 'error', error: `${!!error?.keyValue?.deviceToken?'Device Token': 'Email'} already in use!` })
     }
     throw error
   }
@@ -141,8 +139,8 @@ app.get('/api/profile/:id', async (req, res) => {
   }
 })
 
-app.get('/api/studios', async (req, res) => {
-  const { lat, long } = req.query
+app.post('/api/studios', async (req, res) => {
+  const { lat, long } = req.body.params
   try {
     let data = []
     const studios = await User.find({ __t: 'OwnerSchema' }).select('-password')
@@ -160,14 +158,15 @@ app.get('/api/studios', async (req, res) => {
         promise.push(
           axios(config)
             .then(function (response) {
+              console.log(response.data.rows[0].elements[0])
               let distance = response.data.rows[0].elements[0].distance?.value
               let timeToReach =
-                response.data.rows[0].elements[0].duration?.value
-              if (!!distance && !!duration)
+                response.data.rows[0].elements[0]?.duration?.value ?? 0
+              if (!!distance && !!timeToReach)
                 data.push({
                   ...item._doc,
                   distance: distance / 1000,
-                  timeToReach: timeToReach,
+                  timeToReach,
                 })
             })
             .catch(function (error) {
@@ -259,7 +258,7 @@ app.post(`/api/booking/:studioId`, async (req, res) => {
       studioDetails,
       userDetails,
     })
-    if (!!bookingResponse) res.send({ status: 'ok', data: response.id })
+    if (!!bookingResponse) res.send({ status: 'ok', data: bookingResponse.id })
   } catch (e) {
     console.error(e.error)
     throw e

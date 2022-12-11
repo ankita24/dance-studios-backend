@@ -24,14 +24,17 @@ const ownerSchema = mongoose.Schema(
     duration: { type: 'number' },
     sqFeet: { type: 'number' },
     soundProof: { type: 'boolean' },
-    lat: { type: 'number' },
-    long: { type: 'number' },
+    lat: { type: 'number', require: true },
+    long: { type: 'number', require: true },
     area: { type: 'number' },
     rooms: { type: 'number' },
     availabilty: {
       type: [{ day: 'string', timings: [{ start: Date, end: Date }] }],
     },
-    deviceToken: { type: 'string', require: true, unique: true },
+    /**
+     * TODO: device token unique
+     */
+    deviceToken: { type: 'string' },
   },
   options
 )
