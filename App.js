@@ -259,9 +259,9 @@ app.post(`/api/booking/:studioId`, async (req, res) => {
       userDetails,
     })
     if (!!bookingResponse) res.send({ status: 'ok', data: bookingResponse.id })
-  } catch (e) {
-    console.error(e.error)
-    throw e
+  } catch (err) {
+    console.error(err.error)
+    throw err
   }
 })
 
