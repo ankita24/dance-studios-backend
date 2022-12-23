@@ -99,7 +99,7 @@ app.post('/api/register', async (req, res) => {
   } catch (error) {
     console.log(error)
     if (error.code === 11000) {
-      return res.json({ status: 'error', error: `${!!error?.keyValue?.deviceToken?'Device Token': 'Email'} already in use!` })
+      return res.json({ status: 'error', error: `${!!error?.keyValue?.deviceToken ? 'Device Token' : 'Email'} already in use!` })
     }
     throw error
   }
@@ -158,11 +158,10 @@ app.post('/api/studios', async (req, res) => {
         promise.push(
           axios(config)
             .then(function (response) {
-              console.log(response.data.rows[0].elements[0])
               let distance = response.data.rows[0].elements[0].distance?.value
               let timeToReach =
                 response.data.rows[0].elements[0]?.duration?.value ?? 0
-              if (!!distance && !!timeToReach)
+              if ((!!distance || distance===0) && (!!timeToReach || timeToReach===0) && distance < 50000)
                 data.push({
                   ...item._doc,
                   distance: distance / 1000,
@@ -194,13 +193,13 @@ app.get('/api/studio/:id', async (req, res) => {
      * TODO: Change the order of days monday and sunday
      */
     const weekdays = [
-      'Sunday',
       'Monday',
       'Tuesday',
       'Wednesday',
       'Thursday',
       'Friday',
       'Saturday',
+      'Sunday',
     ]
     const { id } = req.params
     const studioDetails = await Owner.find({ _id: id }).select('-password')
@@ -211,9 +210,8 @@ app.get('/api/studio/:id', async (req, res) => {
     const today = new Date()
 
     const { availabilty, ...data } = studioDetails[0]?._doc ?? {}
-
     const todaySlots =
-      availabilty.find(item => item.day === weekdays[today.getDay()])
+      availabilty.find(item => item.day === weekdays[today.getDay()-1])
         ?.timings ?? []
     const slots = []
     todaySlots.forEach(item => {

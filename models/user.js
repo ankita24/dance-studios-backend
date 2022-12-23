@@ -21,7 +21,6 @@ const ownerSchema = mongoose.Schema(
     location: { type: 'string' },
     images: { type: ['string'] },
     cost: { type: 'number' },
-    duration: { type: 'number' },
     sqFeet: { type: 'number' },
     soundProof: { type: 'boolean' },
     lat: { type: 'number', require: true },
