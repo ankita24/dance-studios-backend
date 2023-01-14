@@ -18,7 +18,7 @@ const app = express()
 
 app.use(bodyParser.json())
 
-const password = 'sHoWZANJwIMcGyuZ'//process.env.MONGO_PASSWORD
+const password = process.env.MONGO_PASSWORD
 
 mongoose.connect(
   `mongodb+srv://ankita:${password}@studio.ituqd.mongodb.net/?retryWrites=true&w=majority`,
