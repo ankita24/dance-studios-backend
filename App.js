@@ -12,7 +12,11 @@ const dotenv = require('dotenv')
 var axios = require('axios')
 const dayjs = require('dayjs')
 
-dotenv.config()
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config();
+}
+
+//dotenv.config()
 
 const app = express()
 
@@ -285,6 +289,8 @@ app.get(`/api/studio-bookings/:studioId`, async (req, res) => {
   }
 })
 
-app.listen(9999, () => {
-  console.log(`Listening to 9999`)
-})
+const PORT = process.env.PORT || 9999;
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
